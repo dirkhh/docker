@@ -1,17 +1,21 @@
-# Build the image using the --build-arg option, e.g.:
-# docker build -t boret/myimage:0.1 --build-arg=mxe_sha=123ABC456 .
-#
+ARG VERSION
 
-From subsurface/mxe-build-container:0.1.stage1
-ARG mxe_sha=master
-ENV _ver=${mxe_sha}
-RUN mkdir -p /win
-ADD settings-stage1.mk /win/settings.mk
-RUN cd /win ; git clone git://github.com/mxe/mxe ; \
-    cd mxe ; \
-    git checkout ${_ver} ;
-RUN mv /win/settings.mk /win/mxe
+# Start from the container that we created in stage 1
+From subsurface/mxe-build-container:$VERSION
+
+# this time the settings include QtWebKit - since everything else was built
+# during the first stage, QtWebKit will be the only thing that gets built
+ADD settings-stage2.mk /win/mxe/settings.mk
 RUN cd /win/mxe ; \
-    make -j 6 2>&1 | tee build.log ;
+    make -j 2 2>&1 | tee build.log ;
 RUN cd /win/mxe ; \
     make MXE_TARGETS=i686-w64-mingw32.static glib -j 6 2>&1 | tee -a build.log ;
+
+# manually build the Win BLE version of QtConnectivity (we can drop this with Qt 5.14)
+RUN cd /win/mxe ; \
+    mkdir -p neolit ; cd neolit ; git clone -b wip/win git://github.com/qt/qtconnectivity
+RUN cd /win/mxe/neolit/qtconnectivity ; \
+    PATH=/win/mxe/usr/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /win/mxe/usr/i686-w64-mingw32.shared/qt5/bin/qmake qtconnectivity.pro ; \
+    PATH=/win/mxe/usr/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin make -j 6 ; \
+    PATH=/win/mxe/usr/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin make install ;
+RUN rm -rf /win/mxe/pkg
