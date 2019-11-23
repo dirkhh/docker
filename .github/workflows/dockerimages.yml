@@ -4,69 +4,41 @@ on:
   push:
     branches:
     - master
-    paths:
-    - scripts/docker/android-build-container/Dockerfile
-    - scripts/docker/mxe-build-container/Dockerfile
-    - scripts/docker/trusty-qt512/Dockerfile
+#    paths:
+#    - scripts/docker/mxe-build-container/*
 
 
 jobs:
-  android-build-container:
+  mxe-build-container-stage1:
     runs-on: ubuntu-latest
+    timeout-minutes: 720
     env:
-      VERSION: 5.13.01
+      VERSION: 0.1
 
     steps:
     - uses: actions/checkout@v1
-
-    - name: Get our pre-reqs
-      run: |
-          cd scripts/docker/android-build-container
-          bash download.sh
-          sed -ie 's/^sudo/#sudo/' setup-docker.sh
-          bash setup-docker.sh
-
     - name: Build the Docker image
-      run: docker build ./scripts/docker/android-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/android-build-container:${VERSION}
+      run: docker build -f ./scripts/docker/mxe-build-container/Dockerfile-stage1 ./scripts/docker/mxe-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container-stage1:${VERSION}
 
     - name: Push the Docker image
       run: |
         docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY/\/*/} -p ${{ secrets.GITHUB_TOKEN }}
-        docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/android-build-container:${VERSION}
+        docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container-stage1:${VERSION}
 
-  mxe-build-container:
+  mxe-build-container-stage2:
     runs-on: ubuntu-latest
+    needs:   mxe-build-container-stage1
     timeout-minutes: 720
     env:
-      VERSION: 0.9
+      VERSION: 0.1
 
     steps:
     - uses: actions/checkout@v1
     - name: Build the Docker image
-      run: docker build ./scripts/docker/mxe-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container:${VERSION}
+      run: docker build -f ./scripts/docker/mxe-build-container/Dockerfile-stage2 ./scripts/docker/mxe-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container:${VERSION}
 
     - name: Push the Docker image
       run: |
         docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY/\/*/} -p ${{ secrets.GITHUB_TOKEN }}
         docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container:${VERSION}
 
-  trusty-qt512:
-    runs-on: ubuntu-latest
-    env:
-      VERSION: 0.7
-
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Get our pre-reqs
-      run: |
-        cd scripts/docker/trusty-qt512
-        bash getpackages.sh
-
-    - name: Build the Docker image
-      run: docker build ./scripts/docker/trusty-qt512/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/trusty-qt512:${VERSION}
-
-    - name: Push the Docker image
-      run: |
-        docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY/\/*/} -p ${{ secrets.GITHUB_TOKEN }}
-        docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/trusty-qt512:${VERSION}
