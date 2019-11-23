@@ -17,28 +17,34 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build -f ./scripts/docker/mxe-build-container/Dockerfile-stage1 ./scripts/docker/mxe-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container-stage1:${VERSION}
 
-    - name: Push the Docker image
-      run: |
-        docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY/\/*/} -p ${{ secrets.GITHUB_TOKEN }}
-        docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container-stage1:${VERSION}
+    - name: Build and Publish stage 1 Docker image to Dockerhub
+      uses: saubermacherag/gpr-docker-publish@master
+      with:
+        USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        IMAGE_TAG: 0.1.stage1
+        DOCKERFILE_PATH: './scripts/docker/mxe-build-container/Dockerfile-stage1'
+        BUILD_CONTEXT: './scripts/docker/mxe-build-container/'
+        DOCKERHUB_REPOSITORY: 'subsurface/mxe-build-container'
 
-  mxe-build-container-stage2:
-    runs-on: ubuntu-latest
-    needs:   mxe-build-container-stage1
-    timeout-minutes: 720
-    env:
-      VERSION: 0.1
+    - name: Build and Publish stage 2 Docker image to Dockerhub
+      uses: saubermacherag/gpr-docker-publish@master
+      with:
+        USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        IMAGE_TAG: 0.1.stage2
+        DOCKERFILE_PATH: './scripts/docker/mxe-build-container/Dockerfile-stage2'
+        BUILD_CONTEXT: './scripts/docker/mxe-build-container/'
+        DOCKERHUB_REPOSITORY: 'subsurface/mxe-build-container'
 
-    steps:
-    - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build -f ./scripts/docker/mxe-build-container/Dockerfile-stage2 ./scripts/docker/mxe-build-container/ --tag docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container:${VERSION}
-
-    - name: Push the Docker image
-      run: |
-        docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY/\/*/} -p ${{ secrets.GITHUB_TOKEN }}
-        docker push docker.pkg.github.com/${GITHUB_REPOSITORY,,}/mxe-build-container:${VERSION}
+    - name: Build and Publish final Docker image to Dockerhub
+      uses: saubermacherag/gpr-docker-publish@master
+      with:
+        USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        IMAGE_TAG: 0.1
+        DOCKERFILE_PATH: './scripts/docker/mxe-build-container/Dockerfile-stage3'
+        BUILD_CONTEXT: './scripts/docker/mxe-build-container/'
+        DOCKERHUB_REPOSITORY: 'subsurface/mxe-build-container'
 
