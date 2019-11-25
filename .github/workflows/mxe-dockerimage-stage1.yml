@@ -4,6 +4,7 @@ on:
   push:
     paths:
     - scripts/docker/mxe-build-container/*
+    - .github/workflows/mxe-docker*
 
 
 jobs:
