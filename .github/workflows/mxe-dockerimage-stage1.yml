@@ -6,7 +6,6 @@ on:
     - scripts/docker/mxe-build-container/*
     - .github/workflows/mxe-docker*
 
-
 jobs:
   mxe-build-container-stage1:
     runs-on: ubuntu-latest
