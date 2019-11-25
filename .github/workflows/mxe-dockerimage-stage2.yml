@@ -1,9 +1,10 @@
 name: Docker Image CI stage 2
 
-on: repository_dispatch
+# trigger this second stage via a repository dispaych event
+# the version that we are building is passed in via the event type that is available to us here
+# as github.event.action
 
-# this gets triggered at the end of stage 1
-# we use the event_type in the payload to have the right version number
+on: repository_dispatch
 
 jobs:
   mxe-build-container-stage2:
